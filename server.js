@@ -8,6 +8,8 @@ const BookOfJohn = require('./Bible-kjv/John.json');
 const fs = require('fs').promises;
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
@@ -26,8 +28,40 @@ app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
 
+// server the HTML file to the client from the root route
 app.get('/', (req, res) => {
-    res.send('Hello, World!');
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.post('/search', async (req, res) => {
+    try {
+        const { query } = req.body;
+        const results = await searchTheBible(query);
+        // Begin constructing an HTML response
+        let htmlResponse = '<div>';
+
+        if (results.length > 0) {
+            results.forEach((result) => {
+                const url = `https://www.biblegateway.com/passage/?search=${result.book}+${result.chapter}:${result.verse}&version=KJV`;
+                htmlResponse += `
+        <div class="search-result mb-4 p-4 bg-white rounded shadow my-4">
+            <h2 class="text-lg font-semibold text-blue-700 underline"><a href="${url}" target="_blank">${result.book} ${result.chapter}:${result.verse}</a></h2>
+            <p class="text-gray-600 mt-2">${result.text}</p>
+        </div>
+    `;
+            });
+        } else {
+            htmlResponse += '<p class="text-gray-600">No results found.</p>';
+        }
+
+        htmlResponse += '</div>';
+
+        // Send the HTML response back to the client
+        res.send(htmlResponse);
+    } catch (error) {
+        console.error('Error searching the Bible:', error);
+        res.status(500).json({ error: 'An error occurred while searching the Bible' });
+    }
 });
 
 const getEmbedding = async (text) => {
@@ -40,89 +74,9 @@ const getEmbedding = async (text) => {
     return embeddings.data[0].embedding;
 };
 
-const getEmbeddingsBatch = async (texts) => {
-    const embeddingsResponse = await openai.embeddings.create({
-        input: texts, // 'texts' is now an array of strings
-        model: 'text-embedding-ada-002',
-    });
-    return embeddingsResponse.data.map((data) => data.embedding);
-};
-
-const embedTheEntireBibleBatch = async () => {
-    const booksFile = path.resolve(__dirname, './Bible-kjv/Books.json');
-    const books = await fs.readFile(booksFile, 'utf8').then(JSON.parse);
-
-    for (const bookName of books) {
-        console.log(`Embedding ${bookName}...`);
-        const bookFile = path.resolve(__dirname, `./Bible-kjv/${bookName}.json`);
-        const book = await fs.readFile(bookFile, 'utf8').then(JSON.parse);
-
-        for (const chapter of book.chapters) {
-            let batchTexts = [];
-            let batchIds = [];
-
-            for (const verse of chapter.verses) {
-                batchTexts.push(verse.text);
-                batchIds.push(`${bookName}-${chapter.chapter}-${verse.verse}`);
-
-                if (batchTexts.length >= 20) {
-                    // Adjust based on API limits and performance testing
-                    const embeddings = await getEmbeddingsBatch(batchTexts);
-                    const data = embeddings.map((embedding, index) => ({
-                        id: batchIds[index],
-                        values: embedding,
-                    }));
-
-                    await index.upsert(data);
-
-                    // Reset batch
-                    batchTexts = [];
-                    batchIds = [];
-                }
-            }
-
-            // Handle any remaining items in the batch for the chapter
-            if (batchTexts.length > 0) {
-                const embeddings = await getEmbeddingsBatch(batchTexts);
-                const data = embeddings.map((embedding, index) => ({
-                    id: batchIds[index],
-                    values: embedding,
-                }));
-
-                await index.upsert(data);
-            }
-
-            // Log completion of the chapter after processing all verses in it
-            console.log(`Embedding of ${bookName} chapter ${chapter.chapter} complete.`);
-        }
-    }
-    console.log('Batch embedding of the entire Bible complete.');
-};
-
 //////////////////
 // SEARCH  //
 //////////////////
-
-const returnVerses = async (results) => {
-    const verses = [];
-
-    for (const result of results) {
-        const id = result.id;
-        const chapterNumber = id.split('-')[0];
-        const verseNumber = id.split('-')[1];
-
-        const chapter = BookOfJohn.chapters[chapterNumber - 1];
-        const verse = chapter.verses[verseNumber - 1];
-
-        verses.push({
-            chapter: chapterNumber,
-            verse: verseNumber,
-            text: verse.text,
-        });
-    }
-
-    return verses;
-};
 
 const search = async (query) => {
     const results = await index.query({
@@ -135,17 +89,49 @@ const search = async (query) => {
     return results;
 };
 
-const searchTheBookOfJohn = async (query) => {
-    // get embeddings for query
-    const queryEmbedding = await getEmbedding(query);
-
-    // search for similar embeddings
-    const results = await search(queryEmbedding);
-
-    // return verses
-    const verses = await returnVerses(results.matches);
-
-    console.log(verses);
+const loadBookByName = async (bookName) => {
+    // Adjust the file name as necessary (e.g., remove spaces or match your naming convention)
+    const fileName = bookName.replace(/\s/g, '') + '.json';
+    const filePath = path.resolve(__dirname, `./Bible-kjv/${fileName}`);
+    try {
+        const bookData = await fs.readFile(filePath, 'utf8');
+        return JSON.parse(bookData);
+    } catch (error) {
+        console.error(`Error loading book ${bookName}:`, error);
+        return null;
+    }
 };
 
-// searchTheBookOfJohn('jesus wept');
+const returnVerses = async (results) => {
+    const verses = [];
+
+    for (const result of results) {
+        const [bookName, chapterNumber, verseNumber] = result.id.split('-');
+        const book = await loadBookByName(bookName);
+        if (!book) continue; // Skip if the book could not be loaded
+
+        const chapter = book.chapters[parseInt(chapterNumber, 10) - 1];
+        const verse = chapter.verses.find((v) => v.verse === verseNumber);
+
+        if (chapter && verse) {
+            verses.push({
+                book: bookName,
+                chapter: chapterNumber,
+                verse: verseNumber,
+                text: verse.text,
+            });
+        }
+    }
+
+    return verses;
+};
+
+const searchTheBible = async (query) => {
+    const queryEmbedding = await getEmbedding(query);
+    const results = await search(queryEmbedding); // Assuming this returns something like { matches: [...] }
+
+    // Adjusted to await the asynchronous returnVerses function
+    const verses = await returnVerses(results.matches);
+
+    return verses;
+};
