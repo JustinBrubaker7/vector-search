@@ -89,9 +89,12 @@ const search = async (query) => {
 };
 
 const loadBookByName = async (bookName) => {
+    // Use the environment variable or default to './Bible-kjv' if it's not set
+    const bibleJsonPath = process.env.BIBLE_JSON_PATH || './Bible-kjv';
+
     // Adjust the file name as necessary (e.g., remove spaces or match your naming convention)
     const fileName = bookName.replace(/\s/g, '') + '.json';
-    const filePath = path.resolve(__dirname, `./Bible-kjv/${fileName}`);
+    const filePath = path.resolve(__dirname, `${bibleJsonPath}/${fileName}`);
     try {
         const bookData = await fs.readFile(filePath, 'utf8');
         return JSON.parse(bookData);
