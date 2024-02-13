@@ -5,6 +5,8 @@ const OpenAI = require('openai');
 const { Pinecone } = require('@pinecone-database/pinecone');
 const BookOfJohn = require('./Bible-kjv/John.json');
 
+const fs = require('fs').promises;
+
 const app = express();
 
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
@@ -38,25 +40,63 @@ const getEmbedding = async (text) => {
     return embeddings.data[0].embedding;
 };
 
-const embedTheBookOfJohn = async () => {
-    for (const chapter of BookOfJohn.chapters) {
-        for (const verse of chapter.verses) {
-            const text = verse.text;
-            const embedding = await getEmbedding(text);
+const getEmbeddingsBatch = async (texts) => {
+    const embeddingsResponse = await openai.embeddings.create({
+        input: texts, // 'texts' is now an array of strings
+        model: 'text-embedding-ada-002',
+    });
+    return embeddingsResponse.data.map((data) => data.embedding);
+};
 
-            // Using chapter and verse number as ID
-            const id = `${chapter.chapter}-${verse.verse}`;
+const embedTheEntireBibleBatch = async () => {
+    const booksFile = path.resolve(__dirname, './Bible-kjv/Books.json');
+    const books = await fs.readFile(booksFile, 'utf8').then(JSON.parse);
 
-            // Send embeddings to Pinecone
-            const data = {
-                id: id,
-                values: embedding,
-            };
+    for (const bookName of books) {
+        console.log(`Embedding ${bookName}...`);
+        const bookFile = path.resolve(__dirname, `./Bible-kjv/${bookName}.json`);
+        const book = await fs.readFile(bookFile, 'utf8').then(JSON.parse);
 
-            await index.upsert([data]);
+        for (const chapter of book.chapters) {
+            let batchTexts = [];
+            let batchIds = [];
+
+            for (const verse of chapter.verses) {
+                batchTexts.push(verse.text);
+                batchIds.push(`${bookName}-${chapter.chapter}-${verse.verse}`);
+
+                if (batchTexts.length >= 20) {
+                    // Adjust based on API limits and performance testing
+                    const embeddings = await getEmbeddingsBatch(batchTexts);
+                    const data = embeddings.map((embedding, index) => ({
+                        id: batchIds[index],
+                        values: embedding,
+                    }));
+
+                    await index.upsert(data);
+
+                    // Reset batch
+                    batchTexts = [];
+                    batchIds = [];
+                }
+            }
+
+            // Handle any remaining items in the batch for the chapter
+            if (batchTexts.length > 0) {
+                const embeddings = await getEmbeddingsBatch(batchTexts);
+                const data = embeddings.map((embedding, index) => ({
+                    id: batchIds[index],
+                    values: embedding,
+                }));
+
+                await index.upsert(data);
+            }
+
+            // Log completion of the chapter after processing all verses in it
+            console.log(`Embedding of ${bookName} chapter ${chapter.chapter} complete.`);
         }
     }
-    console.log('Embedding of the Book of John complete.');
+    console.log('Batch embedding of the entire Bible complete.');
 };
 
 //////////////////
