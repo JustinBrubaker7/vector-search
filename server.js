@@ -3,7 +3,6 @@ const port = 3000;
 const path = require('path');
 const OpenAI = require('openai');
 const { Pinecone } = require('@pinecone-database/pinecone');
-const BookOfJohn = require('./Bible-kjv/John.json');
 
 const fs = require('fs').promises;
 
