@@ -9,14 +9,6 @@ const app = express();
 
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
-app.get('/', (req, res) => {
-    res.send('Hello, World!');
-});
-
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
-
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
@@ -24,7 +16,17 @@ const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY,
     environment: process.env.PINECONE_ENVIRONMENT,
 });
-const index = pinecone.index('bible-test');
+
+const namespace = 'bible-search';
+const index = pinecone.index(namespace);
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
+
+app.get('/', (req, res) => {
+    res.send('Hello, World!');
+});
 
 const getEmbedding = async (text) => {
     const embeddings = await openai.embeddings.create({
@@ -57,16 +59,9 @@ const embedTheBookOfJohn = async () => {
     console.log('Embedding of the Book of John complete.');
 };
 
-const search = async (query) => {
-    const results = await index.query({
-        vector: query,
-        topK: 5,
-    });
-
-    console.log(results);
-
-    return results;
-};
+//////////////////
+// SEARCH  //
+//////////////////
 
 const returnVerses = async (results) => {
     const verses = [];
@@ -89,6 +84,17 @@ const returnVerses = async (results) => {
     return verses;
 };
 
+const search = async (query) => {
+    const results = await index.query({
+        vector: query,
+        topK: 5,
+    });
+
+    console.log(results);
+
+    return results;
+};
+
 const searchTheBookOfJohn = async (query) => {
     // get embeddings for query
     const queryEmbedding = await getEmbedding(query);
@@ -102,4 +108,4 @@ const searchTheBookOfJohn = async (query) => {
     console.log(verses);
 };
 
-searchTheBookOfJohn('jesus wept');
+// searchTheBookOfJohn('jesus wept');
