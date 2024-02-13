@@ -7,12 +7,12 @@ const getEmbeddingsBatch = async (texts) => {
 };
 
 const embedTheEntireBibleBatch = async () => {
-    const booksFile = path.resolve(__dirname, './Bible-kjv/Books.json');
+    const booksFile = path.resolve(__dirname, './Bible/Books.json');
     const books = await fs.readFile(booksFile, 'utf8').then(JSON.parse);
 
     for (const bookName of books) {
         console.log(`Embedding ${bookName}...`);
-        const bookFile = path.resolve(__dirname, `./Bible-kjv/${bookName}.json`);
+        const bookFile = path.resolve(__dirname, `./Bible/${bookName}.json`);
         const book = await fs.readFile(bookFile, 'utf8').then(JSON.parse);
 
         for (const chapter of book.chapters) {
