@@ -1,5 +1,5 @@
 const express = require('express');
-const port = 3000;
+const port = 8080;
 const path = require('path');
 const OpenAI = require('openai');
 const { Pinecone } = require('@pinecone-database/pinecone');
