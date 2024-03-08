@@ -6,7 +6,8 @@ const doc = {
         description: 'This is a simple API for searching the Bible using semantic search.',
     },
     // Dynamically set the host based on the environment
-    host: 'vector.justinbrubaker.dev/search',
+    // host: 'vector.justinbrubaker.dev/search',
+    host: 'localhost:8080',
     schemes: ['https'], // Ensure HTTPS is used, especially for production
 };
 

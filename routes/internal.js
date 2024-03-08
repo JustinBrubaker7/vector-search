@@ -4,7 +4,15 @@ const { searchTheBible } = require('../utils/search');
 const path = require('path');
 
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../index.html'));
+    res.sendFile(path.join(__dirname, '../pages/index.html'));
+});
+
+router.get('/study-generator', (req, res) => {
+    res.sendFile(path.join(__dirname, '../pages/study-generator.html'));
+});
+
+router.get('/sermon-title-tool', (req, res) => {
+    res.sendFile(path.join(__dirname, '../pages/sermon-title-tool.html'));
 });
 
 router.post('/search-html', async (req, res) => {

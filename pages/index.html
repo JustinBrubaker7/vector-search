@@ -13,6 +13,62 @@
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-gray-100 font-sans leading-normal tracking-normal">
+        <nav class="bg-white shadow">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 justify-between">
+                    <div class="flex">
+                        <div class="flex flex-shrink-0 items-center">
+                            <img
+                                class="h-8 w-auto"
+                                src="https://res.cloudinary.com/dgcg1kqls/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1709938559/sa4ao9hdrwmwjdqz2ep9.png"
+                                alt="Your Company"
+                            />
+                        </div>
+                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                            <!-- Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
+                            <a
+                                href="/"
+                                class="inline-flex items-center border-b-2 border-emerald-800 px-1 pt-1 text-sm font-medium text-gray-900"
+                                >Semantic Search</a
+                            >
+                            <a
+                                href="/study-generator"
+                                class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                >Bible Study Generator</a
+                            >
+                            <a
+                                href="/sermon-title-tool"
+                                class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                >Sermon Title Tool</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile menu, show/hide based on menu state. -->
+            <div class="sm:hidden" id="mobile-menu">
+                <div class="space-y-1 pb-3 pt-2">
+                    <!-- Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700" -->
+                    <a
+                        href="/"
+                        class="block border-l-4 border-emerald-500 bg-emerald-50 py-2 pl-3 pr-4 text-base font-medium text-emerald-700"
+                        >Semantic Search</a
+                    >
+                    <a
+                        href="/study-generator"
+                        class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                        >Bible Study Generator</a
+                    >
+                    <a
+                        href="/sermon-title-tool"
+                        class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                        >Sermon Title Tool</a
+                    >
+                </div>
+            </div>
+        </nav>
+
         <div class="container mx-auto p-8">
             <div class="flex flex-wrap justify-center">
                 <div class="w-full lg:w-8/12 xl:w-7/12 px-4">
@@ -36,7 +92,7 @@
                         </div>
                         <div class="flex items-center justify-between">
                             <button
-                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                class="bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                                 type="submit"
                             >
                                 Search

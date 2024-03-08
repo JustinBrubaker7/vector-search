@@ -45,6 +45,9 @@ if (process.env.NODE_ENV === 'production') {
         });
 }
 
+// server the assets folder in the public directory
+app.use(express.static('public'));
+
 app.use('/', require('./routes/internal'));
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.use('/search', require('./routes/external'));

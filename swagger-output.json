@@ -5,7 +5,7 @@
     "description": "This is a simple API for searching the Bible using semantic search.",
     "version": "1.0.0"
   },
-  "host": "vector.justinbrubaker.dev/search",
+  "host": "localhost:8080",
   "basePath": "/",
   "schemes": [
     "https"
