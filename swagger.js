@@ -2,10 +2,10 @@ const swaggerAutogen = require('swagger-autogen')();
 
 const doc = {
     info: {
-        title: 'My API',
-        description: 'Description',
+        title: 'Semantic Search - Bible Vector Search API',
+        description: 'This is a simple API for searching the Bible using semantic search.',
     },
-    host: 'localhost:8080/search/',
+    host: 'localhost:8080/search',
 };
 
 const outputFile = './swagger-output.json';

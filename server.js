@@ -2,9 +2,10 @@ const express = require('express');
 const port = 8080;
 const path = require('path');
 const OpenAI = require('openai');
-const { Pinecone } = require('@pinecone-database/pinecone');
+const https = require('https');
+const fs = require('fs');
 
-const fs = require('fs').promises;
+const { Pinecone } = require('@pinecone-database/pinecone');
 
 const app = express();
 app.use(express.json());
@@ -26,10 +27,23 @@ const pinecone = new Pinecone({
 const namespace = 'bible-search';
 const index = pinecone.index(namespace);
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
-
+if (process.env.NODE_ENV === 'production') {
+    // Production server setup...
+    app.listen(8080); // Example for production, adjust as needed
+} else {
+    // Local development with HTTPS
+    https
+        .createServer(
+            {
+                key: fs.readFileSync('./security/key.pem'),
+                cert: fs.readFileSync('./security/cert.pem'),
+            },
+            app
+        )
+        .listen(8080, function () {
+            console.log('HTTPS server running on port 8080');
+        });
+}
 
 app.use('/', require('./routes/internal'));
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile));
