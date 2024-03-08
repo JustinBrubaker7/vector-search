@@ -12,6 +12,9 @@ app.use(express.urlencoded({ extended: true }));
 
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerFile = require('./swagger-output.json');
+
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
@@ -27,12 +30,17 @@ app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
 
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+
+// add the external.js router to the app
+app.use('/search', require('./routes/external'));
+
 // server the HTML file to the client from the root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.post('/search', async (req, res) => {
+app.post('/search-html', async (req, res) => {
     try {
         const { query } = req.body;
         const results = await searchTheBible(query);
